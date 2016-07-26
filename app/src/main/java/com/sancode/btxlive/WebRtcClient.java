@@ -181,6 +181,7 @@ public class WebRtcClient {
                                 Log.d("offer","CreateAnswerCommand");
                                 //message.getString("offer");
                                 start(message.getString("name"));
+                                name=message.getString("name");
                                 peer= new Peer(message.getString("name"),0);
                                 peers.put(message.getString("name"),peer);
 
@@ -200,7 +201,7 @@ public class WebRtcClient {
 
                                 break;
                             case "answer":
-                                start(message.getString("name"));
+                                start(name);
                                 peer = peers.get(message.getString("name"));
                                 sdp = new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm("OFFER"),
@@ -216,7 +217,20 @@ public class WebRtcClient {
 
                                 break;
                             case "candidate":
+                                PeerConnection pc = peers.get(name).pc;
+                                Log.d("candidate", message.getString("candidate"));
+                                String cand=message.getJSONObject("candidate").getString("candidate");
+                                String sdpMid= message.getJSONObject("candidate").getString("sdpMid");
+                                 int sdpMLineIndex=Integer.parseInt(message.getJSONObject("candidate").getString("sdpMLineIndex"));
 
+                                if (pc.getRemoteDescription() != null) {
+                                    IceCandidate candidate = new IceCandidate(
+                                            sdpMid,
+                                            sdpMLineIndex,
+                                            cand
+                                    );
+                                    pc.addIceCandidate(candidate);
+                                }
 
                                 break;
                             case "leave":
