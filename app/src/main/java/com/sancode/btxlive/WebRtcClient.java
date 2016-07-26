@@ -172,6 +172,7 @@ public class WebRtcClient {
                             case "login":
                                if(message.getString("success")=="true"){
                                    Log.d("login","Sin problema");
+
                                }else {
                                    Log.d("login","problemas al conectar con signaling");
                                }
@@ -188,6 +189,7 @@ public class WebRtcClient {
                                         message.getJSONObject("offer").getString("sdp")
                                 );
                                 peer.pc.setRemoteDescription(peer, sdp);
+                               // peer.pc.createAnswer(peer, pcConstraints);
                                 peer.pc.createAnswer(peer, pcConstraints);
                                 Log.d("offer",sdp.description);
                                // mListener.onCallReady(message.getString("name"));
@@ -207,9 +209,11 @@ public class WebRtcClient {
                                 peer.pc.setRemoteDescription(peer, sdp);
                                 peer.pc.createOffer(peer, pcConstraints);
 
-                                JSONObject jsonObject1= new JSONObject();
+                                /*JSONObject jsonObject1= new JSONObject();
                                 jsonObject1.put("type","offer");
                                 jsonObject1.put("offer",sdp);
+                                mConnection.sendTextMessage(jsonObject1.toString());*/
+
                                 break;
                             case "candidate":
 
@@ -292,8 +296,8 @@ public class WebRtcClient {
             // TODO: modify sdp to use pcParams prefered codecs
             try {
                 JSONObject payload = new JSONObject();
-                payload.put("type", "offer");
-                payload.put("sdp", sdp.description);
+                payload.put("type", "answer");
+                payload.put("answer", sdp.description);
                 //sendMessage(id, sdp.type.canonicalForm(), payload);
                 mConnection.sendTextMessage(payload.toString());
                 pc.setLocalDescription(Peer.this, sdp);
@@ -334,7 +338,16 @@ public class WebRtcClient {
 
         @Override
         public void onIceCandidate(final IceCandidate candidate) {
+
             try {
+                JSONObject jsonObject= new JSONObject();
+                jsonObject.put("candidate", candidate.sdp+","+candidate.sdpMid+","+String.valueOf(candidate.sdpMLineIndex));
+                mConnection.sendTextMessage(jsonObject.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            /*try {
                 JSONObject payload = new JSONObject();
                 payload.put("label", candidate.sdpMLineIndex);
                 payload.put("id", candidate.sdpMid);
@@ -343,7 +356,7 @@ public class WebRtcClient {
                 mConnection.sendTextMessage(payload.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
 
         @Override
