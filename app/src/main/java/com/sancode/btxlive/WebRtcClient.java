@@ -214,7 +214,6 @@ public class WebRtcClient {
                                 jsonObject.put("answer",jsonSDP);
                                 jsonObject.put("name",name);
                                 mConnection.sendTextMessage(jsonObject.toString());
-
                                 break;
                             case "answer":
                                 peerRemote = peers.get(message.getString("name"));
@@ -224,6 +223,10 @@ public class WebRtcClient {
                                 );
                                 peerRemote.pc.setRemoteDescription(peerRemote, sdp);
                                 peerRemote.pc.createOffer(peerRemote, pcConstraints);
+
+
+                                mListener.onCallReady(name);
+                                start(name);
 
                                 /*JSONObject jsonObject1= new JSONObject();
                                 jsonObject1.put("type","offer");
@@ -245,8 +248,8 @@ public class WebRtcClient {
                                             cand
                                     );
                                     pc.addIceCandidate(candidate);
-                                }
 
+                                }
                                 break;
                             case "leave":
                                 removePeer(message.getString("name"));
@@ -338,13 +341,22 @@ public class WebRtcClient {
             }*/
 
             pc.setLocalDescription(Peer.this, sdp);
-            mListener.onCallReady(id);
-            start(id);
+           /* try {
+                JSONObject tjsdp = new JSONObject(sdp.description);
+                IceCandidate iceCandidate = new IceCandidate(tjsdp.getString("sdpMid"),tjsdp.getInt("sdpMLineIndex"),tjsdp.getString("sdp"));
+                JSONObject jsonObject= new JSONObject();
+                jsonObject.put("candidate", iceCandidate.sdp+","+iceCandidate.sdpMid+","+String.valueOf(iceCandidate.sdpMLineIndex));
+                jsonObject.put("name",id);
+                mConnection.sendTextMessage(jsonObject.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }*/
         }
 
         @Override
         public void onSetSuccess() {
             pc.createAnswer(Peer.this,pcConstraints );
+
         }
 
         @Override
@@ -376,8 +388,13 @@ public class WebRtcClient {
         public void onIceCandidate(final IceCandidate candidate) {
 
             try {
+                JSONObject jsonCandidate = new JSONObject();
+                jsonCandidate.put("candidate", candidate.sdp+","+candidate.sdpMid+","+String.valueOf(candidate.sdpMLineIndex));
                 JSONObject jsonObject= new JSONObject();
-                jsonObject.put("candidate", candidate.sdp+","+candidate.sdpMid+","+String.valueOf(candidate.sdpMLineIndex));
+                jsonObject.put("type","candidate");
+                jsonObject.put("candidate",jsonCandidate);
+                jsonObject.put("name",id);
+                Log.d("ELCOMAND",jsonObject.toString());
                 mConnection.sendTextMessage(jsonObject.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -464,6 +481,7 @@ public class WebRtcClient {
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
         //pcConstraints.optional.add(new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
+
     }
 
 
