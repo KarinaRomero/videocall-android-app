@@ -140,7 +140,8 @@ public class WebRtcClient {
 
         private void webConnection() throws WebSocketException {
             mConnection.connect(wsuri, new WebSocketHandler() {
-                Peer peer;
+                Peer peerRemote;
+                Peer peerLocal;
                 SessionDescription sdp;
                 IceCandidate candidate;
                 String name;
@@ -164,7 +165,6 @@ public class WebRtcClient {
                 public void onTextMessage(String payload) {
                     Log.d(TAG, "Got echo: " + payload);
                    JSONObject message= null;
-
                     try {
                         message = new JSONObject(payload);
 
@@ -178,37 +178,43 @@ public class WebRtcClient {
                                }
                                 break;
                             case "offer":
-                                Log.d("offer","CreateAnswerCommand");
-                                //message.getString("offer");
-                                start(message.getString("name"));
-                                name=message.getString("name");
-                                peer= new Peer(message.getString("name"),0);
-                                peers.put(message.getString("name"),peer);
+                                Log.d("offer","Creando Answer");
+                                if(name==null){
+                                    name=message.getString("name");
+                                }
+                                start(name);
+;
+                                //peerRemote=addPeer(name,0);
+                                //peerLocal = addPeer("Android",0);
+                                peerRemote = new Peer(name,0);
+                                Log.d("peers",peers.toString());
 
                                 sdp = new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm("OFFER"),
                                         message.getJSONObject("offer").getString("sdp")
                                 );
-                                peer.pc.setRemoteDescription(peer, sdp);
-                               // peer.pc.createAnswer(peer, pcConstraints);
-                                peer.pc.createAnswer(peer, pcConstraints);
+                                peerRemote.pc.setRemoteDescription(peerRemote,sdp);
+                                peerRemote.pc.createAnswer(peerRemote, pcConstraints);
                                 Log.d("offer",sdp.description);
-                               // mListener.onCallReady(message.getString("name"));
+                                peers.put(name,peerRemote);
+
                                 JSONObject jsonObject= new JSONObject();
                                 jsonObject.put("type","answer");
-                                jsonObject.put("answer",sdp);
+                                jsonObject.put("answer",peerRemote.pc.getLocalDescription().description);
+                                jsonObject.put("name",name);
                                 mConnection.sendTextMessage(jsonObject.toString());
+                                mListener.onCallReady(message.getString("name"));
 
                                 break;
                             case "answer":
                                 start(name);
-                                peer = peers.get(message.getString("name"));
+                                peerRemote = peers.get(message.getString("name"));
                                 sdp = new SessionDescription(
-                                        SessionDescription.Type.fromCanonicalForm("OFFER"),
-                                        message.getJSONObject("offer").getString("sdp")
+                                        SessionDescription.Type.fromCanonicalForm("ANSWER"),
+                                        message.getJSONObject("answer").getString("sdp")
                                 );
-                                peer.pc.setRemoteDescription(peer, sdp);
-                                peer.pc.createOffer(peer, pcConstraints);
+                                peerRemote.pc.setRemoteDescription(peerRemote, sdp);
+                                peerRemote.pc.createOffer(peerRemote, pcConstraints);
 
                                 /*JSONObject jsonObject1= new JSONObject();
                                 jsonObject1.put("type","offer");
@@ -224,7 +230,7 @@ public class WebRtcClient {
                                  int sdpMLineIndex=Integer.parseInt(message.getJSONObject("candidate").getString("sdpMLineIndex"));
 
                                 if (pc.getRemoteDescription() != null) {
-                                    IceCandidate candidate = new IceCandidate(
+                                    candidate = new IceCandidate(
                                             sdpMid,
                                             sdpMLineIndex,
                                             cand
@@ -237,7 +243,7 @@ public class WebRtcClient {
                                 removePeer(message.getString("name"));
                                 break;
                             default:
-                                mConnection.sendTextMessage(message.toString());
+                                //mConnection.sendTextMessage(message.toString());
                                 //sendTo(connection,{type:"error",message:"Unrecognized command: "+data.type});
                                 break;
 
