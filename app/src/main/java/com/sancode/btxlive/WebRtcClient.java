@@ -318,6 +318,7 @@ public class WebRtcClient {
                 JSONObject payload = new JSONObject();
                 payload.put("type", "answer");
                 payload.put("answer", sdp.description);
+                payload.put("name",id);
                 //sendMessage(id, sdp.type.canonicalForm(), payload);
                 mConnection.sendTextMessage(payload.toString());
                 pc.setLocalDescription(Peer.this, sdp);
@@ -443,12 +444,11 @@ public class WebRtcClient {
 
         messageHandler.webConnection();
 
-        iceServers.add(new PeerConnection.IceServer("stun:23.21.150.121"));
         iceServers.add(new PeerConnection.IceServer("stun:stun.l.google.com:19302"));
 
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
-        pcConstraints.optional.add(new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
+        //pcConstraints.optional.add(new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
     }
 
 
@@ -494,13 +494,13 @@ public class WebRtcClient {
      */
     public void start(String name){
         setCamera();
-        try {
+        /*try {
             JSONObject message = new JSONObject();
             message.put("name", name);
             mConnection.sendTextMessage(message.toString());
         } catch (JSONException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     private void setCamera(){
