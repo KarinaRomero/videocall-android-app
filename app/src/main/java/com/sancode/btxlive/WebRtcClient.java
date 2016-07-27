@@ -197,17 +197,26 @@ public class WebRtcClient {
                                 peerRemote.pc.createAnswer(peerRemote, pcConstraints);
                                 Log.d("offer",sdp.description);
                                 peers.put(name,peerRemote);
-
+                                /*JSONObject jsonSDP = new JSONObject();
+                                jsonSDP.put("type","answer");
+                                jsonSDP.put("sdp",peerRemote.pc.getLocalDescription().description);
                                 JSONObject jsonObject= new JSONObject();
                                 jsonObject.put("type","answer");
-                                jsonObject.put("answer",peerRemote.pc.getLocalDescription().description);
+                                jsonObject.put("answer",jsonSDP);
+                                jsonObject.put("name",name);
+                                mConnection.sendTextMessage(jsonObject.toString());*/
+
+                                JSONObject jsonSDP = new JSONObject();
+                                jsonSDP.put("type","answer");
+                                jsonSDP.put("sdp",sdp.description);
+                                JSONObject jsonObject= new JSONObject();
+                                jsonObject.put("type","answer");
+                                jsonObject.put("answer",jsonSDP);
                                 jsonObject.put("name",name);
                                 mConnection.sendTextMessage(jsonObject.toString());
-                                mListener.onCallReady(message.getString("name"));
 
                                 break;
                             case "answer":
-                                start(name);
                                 peerRemote = peers.get(message.getString("name"));
                                 sdp = new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm("ANSWER"),
@@ -314,17 +323,23 @@ public class WebRtcClient {
         @Override
         public void onCreateSuccess(final SessionDescription sdp) {
             // TODO: modify sdp to use pcParams prefered codecs
-            try {
-                JSONObject payload = new JSONObject();
-                payload.put("type", "answer");
-                payload.put("answer", sdp.description);
-                payload.put("name",id);
-                //sendMessage(id, sdp.type.canonicalForm(), payload);
-                mConnection.sendTextMessage(payload.toString());
-                pc.setLocalDescription(Peer.this, sdp);
+           /* try {
+                JSONObject jsonSDP = new JSONObject();
+                jsonSDP.put("type","answer");
+                jsonSDP.put("sdp",sdp.description);
+                JSONObject jsonObject= new JSONObject();
+                jsonObject.put("type","answer");
+                jsonObject.put("answer",jsonSDP);
+                jsonObject.put("name",id);
+                mConnection.sendTextMessage(jsonObject.toString());
+
             } catch (JSONException e) {
                 e.printStackTrace();
-            }
+            }*/
+
+            pc.setLocalDescription(Peer.this, sdp);
+            mListener.onCallReady(id);
+            start(id);
         }
 
         @Override
