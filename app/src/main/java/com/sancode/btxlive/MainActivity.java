@@ -158,6 +158,7 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d("CODECODE", String.valueOf(requestCode));
         if (requestCode == VIDEO_CALL_SENT) {
             startCam();
         }

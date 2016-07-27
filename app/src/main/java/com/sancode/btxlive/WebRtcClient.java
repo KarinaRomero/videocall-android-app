@@ -196,6 +196,8 @@ public class WebRtcClient {
                                 peerRemote.pc.setRemoteDescription(peerRemote,sdp);
                                 peerRemote.pc.createAnswer(peerRemote, pcConstraints);
                                 Log.d("offer",sdp.description);
+                                mListener.onCallReady("call1");
+                                peerRemote.pc.addStream(localMS);
                                 peers.put(name,peerRemote);
                                 /*JSONObject jsonSDP = new JSONObject();
                                 jsonSDP.put("type","answer");
@@ -214,6 +216,8 @@ public class WebRtcClient {
                                 jsonObject.put("answer",jsonSDP);
                                 jsonObject.put("name",name);
                                 mConnection.sendTextMessage(jsonObject.toString());
+
+
                                 break;
                             case "answer":
                                 peerRemote = peers.get(message.getString("name"));
@@ -224,15 +228,13 @@ public class WebRtcClient {
                                 peerRemote.pc.setRemoteDescription(peerRemote, sdp);
                                 peerRemote.pc.createOffer(peerRemote, pcConstraints);
 
-
-                                mListener.onCallReady(name);
-                                start(name);
-
                                 /*JSONObject jsonObject1= new JSONObject();
                                 jsonObject1.put("type","offer");
                                 jsonObject1.put("offer",sdp);
                                 mConnection.sendTextMessage(jsonObject1.toString());*/
+                                //mListener.onCallReady(name);
 
+                                //start("Android");
                                 break;
                             case "candidate":
                                 PeerConnection pc = peers.get(name).pc;
