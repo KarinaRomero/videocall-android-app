@@ -170,6 +170,9 @@ public class WebRtcClient {
 
                         switch (message.getString("type")) {
                             case "login":
+
+                                Log.d("log",message.toString());
+
                                if(message.getString("success")=="true"){
                                    Log.d("login","Sin problema");
 
@@ -195,6 +198,7 @@ public class WebRtcClient {
                                 );
                                 peerRemote.pc.setRemoteDescription(peerRemote,sdp);
                                 peerRemote.pc.createAnswer(peerRemote, pcConstraints);
+
                                 Log.d("offer",sdp.description);
                                 mListener.onCallReady("call1");
                                 peerRemote.pc.addStream(localMS);
@@ -207,10 +211,10 @@ public class WebRtcClient {
                                 jsonObject.put("answer",jsonSDP);
                                 jsonObject.put("name",name);
                                 mConnection.sendTextMessage(jsonObject.toString());*/
-
+                                Log.d("SDPLOCAL: ",peerRemote.pc.getLocalDescription().description);
                                 JSONObject jsonSDP = new JSONObject();
                                 jsonSDP.put("type","answer");
-                                jsonSDP.put("sdp",sdp.description);
+                                jsonSDP.put("sdp",peerRemote.pc.getLocalDescription().description);
                                 JSONObject jsonObject= new JSONObject();
                                 jsonObject.put("type","answer");
                                 jsonObject.put("answer",jsonSDP);
@@ -220,12 +224,13 @@ public class WebRtcClient {
 
                                 break;
                             case "answer":
-                                peerRemote = peers.get(message.getString("name"));
+                                /*peerRemote = peers.get(message.getString("name"));
                                 sdp = new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm("ANSWER"),
                                         message.getJSONObject("answer").getString("sdp")
                                 );
-                                peerRemote.pc.setRemoteDescription(peerRemote, sdp);
+
+                                peerRemote.pc.setLocalDescription(peerRemote, sdp);
                                 peerRemote.pc.createOffer(peerRemote, pcConstraints);
 
                                 /*JSONObject jsonObject1= new JSONObject();
@@ -328,6 +333,7 @@ public class WebRtcClient {
         @Override
         public void onCreateSuccess(final SessionDescription sdp) {
             // TODO: modify sdp to use pcParams prefered codecs
+            Log.d("pruebita",sdp.description);
            /* try {
                 JSONObject jsonSDP = new JSONObject();
                 jsonSDP.put("type","answer");
@@ -428,10 +434,25 @@ public class WebRtcClient {
         }
 
         @Override
-        public void onDataChannel(DataChannel dataChannel) {}
+        public void onDataChannel(DataChannel dataChannel) {
+            Log.d("pruebita", "mPeerConnection onDataChannel " + dataChannel);
+        }
 
         @Override
         public void onRenegotiationNeeded() {
+            Log.d("pruebita", "onRenegotiationNeeded");
+            /*try {
+                JSONObject jsonCandidate = new JSONObject();
+                jsonCandidate.put("candidate", candidate.sdp+","+candidate.sdpMid+","+String.valueOf(candidate.sdpMLineIndex));
+                JSONObject jsonObject= new JSONObject();
+                jsonObject.put("type","candidate");
+                jsonObject.put("candidate",jsonCandidate);
+                jsonObject.put("name",id);
+                Log.d("ELCOMAND",jsonObject.toString());
+                mConnection.sendTextMessage(jsonObject.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }*/
 
         }
 
@@ -482,7 +503,7 @@ public class WebRtcClient {
 
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
-        //pcConstraints.optional.add(new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
+       // pcConstraints.optional.add(new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
 
     }
 

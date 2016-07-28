@@ -45,7 +45,7 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
     private VideoRenderer.Callbacks remoteRender;
     private WebRtcClient client;
     private String callerId;
-    private String wsuri= "ws://192.168.1.88:8888";
+    private String wsuri= "ws://192.168.1.75:8888";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
