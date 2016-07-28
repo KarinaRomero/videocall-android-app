@@ -40,12 +40,12 @@ public class WebRtcClient {
     private MediaStream localMS;
     private VideoSource videoSource;
     private RtcListener mListener;
-    private final WebSocketConnection mConnection= new WebSocketConnection();
+    private final WebSocketConnection mConnection = new WebSocketConnection();
 
     /**
      * Implement this interface to be notified of events.
      */
-    public interface RtcListener{
+    public interface RtcListener {
         void onCallReady(String callId);
 
         void onStatusChanged(String newStatus);
@@ -57,86 +57,13 @@ public class WebRtcClient {
         void onRemoveRemoteStream(int endPoint);
     }
 
-    private interface Command{
-        void execute(String peerId, JSONObject payload) throws JSONException;
-    }
-
-    private class CreateOfferCommand implements Command{
-        public void execute(String peerId, JSONObject payload) throws JSONException {
-            Log.d(TAG,"CreateOfferCommand");
-            Peer peer = peers.get(peerId);
-            peer.pc.createOffer(peer, pcConstraints);
-        }
-    }
-
-    private class CreateAnswerCommand implements Command{
-        public void execute(String peerId, JSONObject payload) throws JSONException {
-            Log.d(TAG,"CreateAnswerCommand");
-            Peer peer = peers.get(peerId);
-            SessionDescription sdp = new SessionDescription(
-                    SessionDescription.Type.fromCanonicalForm(payload.getString("type")),
-                    payload.getString("sdp")
-            );
-            peer.pc.setRemoteDescription(peer, sdp);
-            peer.pc.createAnswer(peer, pcConstraints);
-        }
-    }
-
-    private class SetRemoteSDPCommand implements Command{
-        public void execute(String peerId, JSONObject payload) throws JSONException {
-            Log.d(TAG,"SetRemoteSDPCommand");
-            Peer peer = peers.get(peerId);
-            SessionDescription sdp = new SessionDescription(
-                    SessionDescription.Type.fromCanonicalForm(payload.getString("type")),
-                    payload.getString("sdp")
-            );
-            peer.pc.setRemoteDescription(peer, sdp);
-        }
-    }
-
-    private class AddIceCandidateCommand implements Command{
-        public void execute(String peerId, JSONObject payload) throws JSONException {
-            Log.d(TAG,"AddIceCandidateCommand");
-            PeerConnection pc = peers.get(peerId).pc;
-            if (pc.getRemoteDescription() != null) {
-                IceCandidate candidate = new IceCandidate(
-                        payload.getString("id"),
-                        payload.getInt("label"),
-                        payload.getString("candidate")
-                );
-                pc.addIceCandidate(candidate);
-            }
-        }
-    }
-
-    /**
-     * Send a message through the signaling server
-     *
-     * @param to id of recipient
-     * @param type type of message
-     * @param payload payload of message
-     * @throws JSONException
-     */
-    public void sendMessage(String to, String type, JSONObject payload) throws JSONException {
-
-        mConnection.sendTextMessage(payload.toString());
-        Log.d("aqui","sendMessage");
-    }
-
     private class MessageHandler {
-        private HashMap<String, Command> commandMap;
 
         private String wsuri;
 
         private MessageHandler(String wsuri) {
-            this.commandMap = new HashMap<>();
-            commandMap.put("init", new CreateOfferCommand());
-            commandMap.put("offer", new CreateAnswerCommand());
-            commandMap.put("answer", new SetRemoteSDPCommand());
-            commandMap.put("candidate", new AddIceCandidateCommand());
-            this.wsuri=wsuri;
+            this.wsuri = wsuri;
         }
-
 
         private void webConnection() throws WebSocketException {
             mConnection.connect(wsuri, new WebSocketHandler() {
@@ -146,11 +73,10 @@ public class WebRtcClient {
                 IceCandidate candidate;
                 String name;
 
-
                 @Override
                 public void onOpen() {
                     Log.d(TAG, "Status: Connected to " + wsuri);
-                    Log.d("aqui","onOpen");
+                    Log.d("aqui", "onOpen");
                     JSONObject message = new JSONObject();
                     try {
                         message.put("type", "login");
@@ -164,67 +90,52 @@ public class WebRtcClient {
                 @Override
                 public void onTextMessage(String payload) {
                     Log.d(TAG, "Got echo: " + payload);
-                   JSONObject message= null;
+                    JSONObject message = null;
                     try {
                         message = new JSONObject(payload);
 
                         switch (message.getString("type")) {
                             case "login":
 
-                                Log.d("log",message.toString());
+                                if (message.getString("success") == "true") {
+                                    Log.d("login", "Sin problema");
 
-                               if(message.getString("success")=="true"){
-                                   Log.d("login","Sin problema");
-
-                               }else {
-                                   Log.d("login","problemas al conectar con signaling");
-                               }
+                                } else {
+                                    Log.d("login", "problemas al conectar con signaling");
+                                }
                                 break;
                             case "offer":
-                                Log.d("offer","Creando Answer");
-                                if(name==null){
-                                    name=message.getString("name");
+                                Log.d("offer", "Creando Answer");
+                                if (name == null) {
+                                    name = message.getString("name");
                                 }
-                                start(name);
-;
-                                //peerRemote=addPeer(name,0);
-                                //peerLocal = addPeer("Android",0);
-                                peerRemote = new Peer(name,0);
-                                Log.d("peers",peers.toString());
+                                setCamera();
+                                peerRemote = new Peer(name, 0);
+                                Log.d("peers", peers.toString());
 
                                 sdp = new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm("OFFER"),
                                         message.getJSONObject("offer").getString("sdp")
                                 );
-                                peerRemote.pc.setRemoteDescription(peerRemote,sdp);
+                                peerRemote.pc.setRemoteDescription(peerRemote, sdp);
                                 peerRemote.pc.createAnswer(peerRemote, pcConstraints);
 
-                                Log.d("offer",sdp.description);
+                                Log.d("offer", sdp.description);
                                 mListener.onCallReady("call1");
                                 peerRemote.pc.addStream(localMS);
-                                peers.put(name,peerRemote);
-                                /*JSONObject jsonSDP = new JSONObject();
-                                jsonSDP.put("type","answer");
-                                jsonSDP.put("sdp",peerRemote.pc.getLocalDescription().description);
-                                JSONObject jsonObject= new JSONObject();
-                                jsonObject.put("type","answer");
-                                jsonObject.put("answer",jsonSDP);
-                                jsonObject.put("name",name);
-                                mConnection.sendTextMessage(jsonObject.toString());*/
-                                Log.d("SDPLOCAL: ",peerRemote.pc.getLocalDescription().description);
+                                peers.put(name, peerRemote);
+                                Log.d("SDPLOCAL: ", peerRemote.pc.getLocalDescription().description);
                                 JSONObject jsonSDP = new JSONObject();
-                                jsonSDP.put("type","answer");
-                                jsonSDP.put("sdp",peerRemote.pc.getLocalDescription().description);
-                                JSONObject jsonObject= new JSONObject();
-                                jsonObject.put("type","answer");
-                                jsonObject.put("answer",jsonSDP);
-                                jsonObject.put("name",name);
+                                jsonSDP.put("type", "answer");
+                                jsonSDP.put("sdp", peerRemote.pc.getLocalDescription().description);
+                                JSONObject jsonObject = new JSONObject();
+                                jsonObject.put("type", "answer");
+                                jsonObject.put("answer", jsonSDP);
+                                jsonObject.put("name", name);
                                 mConnection.sendTextMessage(jsonObject.toString());
-
-
                                 break;
                             case "answer":
-                                /*peerRemote = peers.get(message.getString("name"));
+                                peerRemote = peers.get(message.getString("name"));
                                 sdp = new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm("ANSWER"),
                                         message.getJSONObject("answer").getString("sdp")
@@ -244,9 +155,9 @@ public class WebRtcClient {
                             case "candidate":
                                 PeerConnection pc = peers.get(name).pc;
                                 Log.d("candidate", message.getString("candidate"));
-                                String cand=message.getJSONObject("candidate").getString("candidate");
-                                String sdpMid= message.getJSONObject("candidate").getString("sdpMid");
-                                 int sdpMLineIndex=Integer.parseInt(message.getJSONObject("candidate").getString("sdpMLineIndex"));
+                                String cand = message.getJSONObject("candidate").getString("candidate");
+                                String sdpMid = message.getJSONObject("candidate").getString("sdpMid");
+                                int sdpMLineIndex = Integer.parseInt(message.getJSONObject("candidate").getString("sdpMLineIndex"));
 
                                 if (pc.getRemoteDescription() != null) {
                                     candidate = new IceCandidate(
@@ -255,26 +166,18 @@ public class WebRtcClient {
                                             cand
                                     );
                                     pc.addIceCandidate(candidate);
-
                                 }
                                 break;
                             case "leave":
                                 removePeer(message.getString("name"));
                                 break;
                             default:
-                                //mConnection.sendTextMessage(message.toString());
-                                //sendTo(connection,{type:"error",message:"Unrecognized command: "+data.type});
                                 break;
-
-                        };
+                        }
+                        ;
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-
-
-
-
-
                 }
 
                 @Override
@@ -283,48 +186,9 @@ public class WebRtcClient {
                 }
             });
         }
-/*
-        private Emitter.Listener onMessage = new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-                JSONObject data = (JSONObject) args[0];
-                try {
-                    String from = data.getString("from");
-                    String type = data.getString("type");
-                    JSONObject payload = null;
-                    if(!type.equals("init")) {
-                        payload = data.getJSONObject("payload");
-                    }
-                    // if peer is unknown, try to add him
-                    if(!peers.containsKey(from)) {
-                        // if MAX_PEER is reach, ignore the call
-                        int endPoint = findEndPoint();
-                        if(endPoint != MAX_PEER) {
-                            Peer peer = addPeer(from, endPoint);
-                            peer.pc.addStream(localMS);
-                            commandMap.get(type).execute(from, payload);
-                        }
-                    } else {
-                        commandMap.get(type).execute(from, payload);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        private Emitter.Listener onId = new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-                String id = (String) args[0];
-                mListener.onCallReady(id);
-            }
-        };*/
-
-
     }
 
-    private class Peer implements SdpObserver, PeerConnection.Observer{
+    private class Peer implements SdpObserver, PeerConnection.Observer {
         private PeerConnection pc;
         private String id;
         private int endPoint;
@@ -333,52 +197,31 @@ public class WebRtcClient {
         @Override
         public void onCreateSuccess(final SessionDescription sdp) {
             // TODO: modify sdp to use pcParams prefered codecs
-            Log.d("pruebita",sdp.description);
-           /* try {
-                JSONObject jsonSDP = new JSONObject();
-                jsonSDP.put("type","answer");
-                jsonSDP.put("sdp",sdp.description);
-                JSONObject jsonObject= new JSONObject();
-                jsonObject.put("type","answer");
-                jsonObject.put("answer",jsonSDP);
-                jsonObject.put("name",id);
-                mConnection.sendTextMessage(jsonObject.toString());
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }*/
-
+            Log.d("pruebita", sdp.description);
             pc.setLocalDescription(Peer.this, sdp);
-           /* try {
-                JSONObject tjsdp = new JSONObject(sdp.description);
-                IceCandidate iceCandidate = new IceCandidate(tjsdp.getString("sdpMid"),tjsdp.getInt("sdpMLineIndex"),tjsdp.getString("sdp"));
-                JSONObject jsonObject= new JSONObject();
-                jsonObject.put("candidate", iceCandidate.sdp+","+iceCandidate.sdpMid+","+String.valueOf(iceCandidate.sdpMLineIndex));
-                jsonObject.put("name",id);
-                mConnection.sendTextMessage(jsonObject.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }*/
         }
 
         @Override
         public void onSetSuccess() {
-            pc.createAnswer(Peer.this,pcConstraints );
+            pc.createAnswer(Peer.this, pcConstraints);
 
         }
 
         @Override
-        public void onCreateFailure(String s) {}
+        public void onCreateFailure(String s) {
+        }
 
         @Override
-        public void onSetFailure(String s) {}
+        public void onSetFailure(String s) {
+        }
 
         @Override
-        public void onSignalingChange(PeerConnection.SignalingState signalingState) {}
+        public void onSignalingChange(PeerConnection.SignalingState signalingState) {
+        }
 
         @Override
         public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
-            if(iceConnectionState == PeerConnection.IceConnectionState.DISCONNECTED) {
+            if (iceConnectionState == PeerConnection.IceConnectionState.DISCONNECTED) {
                 removePeer(id);
                 mListener.onStatusChanged("DISCONNECTED");
             }
@@ -390,46 +233,36 @@ public class WebRtcClient {
         }
 
         @Override
-        public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {}
+        public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
+        }
 
         @Override
         public void onIceCandidate(final IceCandidate candidate) {
 
             try {
                 JSONObject jsonCandidate = new JSONObject();
-                jsonCandidate.put("candidate", candidate.sdp+","+candidate.sdpMid+","+String.valueOf(candidate.sdpMLineIndex));
-                JSONObject jsonObject= new JSONObject();
-                jsonObject.put("type","candidate");
-                jsonObject.put("candidate",jsonCandidate);
-                jsonObject.put("name",id);
-                Log.d("ELCOMAND",jsonObject.toString());
+                jsonCandidate.put("candidate", candidate.sdp + "," + candidate.sdpMid + "," + String.valueOf(candidate.sdpMLineIndex));
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("type", "candidate");
+                jsonObject.put("candidate", jsonCandidate);
+                jsonObject.put("name", id);
+                Log.d("ELCOMAND", jsonObject.toString());
                 mConnection.sendTextMessage(jsonObject.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-
-            /*try {
-                JSONObject payload = new JSONObject();
-                payload.put("label", candidate.sdpMLineIndex);
-                payload.put("id", candidate.sdpMid);
-                payload.put("candidate", candidate.sdp);
-                //sendMessage(id, "candidate", payload);
-                mConnection.sendTextMessage(payload.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }*/
         }
 
         @Override
         public void onAddStream(MediaStream mediaStream) {
-            Log.d(TAG,"onAddStream "+mediaStream.label());
+            Log.d(TAG, "onAddStream " + mediaStream.label());
             // remote streams are displayed from 1 to MAX_PEER (0 is localStream)
-            mListener.onAddRemoteStream(mediaStream, endPoint+1);
+            mListener.onAddRemoteStream(mediaStream, endPoint + 1);
         }
 
         @Override
         public void onRemoveStream(MediaStream mediaStream) {
-            Log.d(TAG,"onRemoveStream "+mediaStream.label());
+            Log.d(TAG, "onRemoveStream " + mediaStream.label());
             removePeer(id);
         }
 
@@ -441,26 +274,13 @@ public class WebRtcClient {
         @Override
         public void onRenegotiationNeeded() {
             Log.d("pruebita", "onRenegotiationNeeded");
-            /*try {
-                JSONObject jsonCandidate = new JSONObject();
-                jsonCandidate.put("candidate", candidate.sdp+","+candidate.sdpMid+","+String.valueOf(candidate.sdpMLineIndex));
-                JSONObject jsonObject= new JSONObject();
-                jsonObject.put("type","candidate");
-                jsonObject.put("candidate",jsonCandidate);
-                jsonObject.put("name",id);
-                Log.d("ELCOMAND",jsonObject.toString());
-                mConnection.sendTextMessage(jsonObject.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }*/
-
         }
 
         public Peer(String id, int endPoint) {
-            Log.d(TAG,"new Peer: "+id + " " + endPoint);
+            Log.d(TAG, "new Peer: " + id + " " + endPoint);
 
-            Log.d("contrains",pcConstraints.toString());
-            Log.d("iceServers",localMS.toString());
+            Log.d("contrains", pcConstraints.toString());
+            Log.d("iceServers", localMS.toString());
 
             this.pc = factory.createPeerConnection(iceServers, pcConstraints, this);
             this.id = id;
@@ -471,14 +291,6 @@ public class WebRtcClient {
             mListener.onStatusChanged("CONNECTING");
         }
 
-    }
-
-    private Peer addPeer(String id, int endPoint) {
-        Peer peer = new Peer(id, endPoint);
-        peers.put(id, peer);
-
-        endPoints[endPoint] = true;
-        return peer;
     }
 
     private void removePeer(String id) {
@@ -503,24 +315,23 @@ public class WebRtcClient {
 
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
-       // pcConstraints.optional.add(new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
+        // pcConstraints.optional.add(new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
 
     }
-
 
 
     /**
      * Call this method in Activity.onPause()
      */
     public void onPause() {
-        if(videoSource != null) videoSource.stop();
+        if (videoSource != null) videoSource.stop();
     }
 
     /**
      * Call this method in Activity.onResume()
      */
     public void onResume() {
-        if(videoSource != null) videoSource.restart();
+        if (videoSource != null) videoSource.restart();
     }
 
     /**
@@ -535,33 +346,18 @@ public class WebRtcClient {
         mConnection.disconnect();
     }
 
-    private int findEndPoint() {
-        for(int i = 0; i < MAX_PEER; i++) if (!endPoints[i]) return i;
-        return MAX_PEER;
-    }
-
     /**
      * Start the client.
-     *
+     * <p/>
      * Set up the local stream and notify the signaling server.
      * Call this method after onCallReady.
      *
      * @param name client name
      */
-    public void start(String name){
-        setCamera();
-        /*try {
-            JSONObject message = new JSONObject();
-            message.put("name", name);
-            mConnection.sendTextMessage(message.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }*/
-    }
 
-    private void setCamera(){
+    public void setCamera() {
         localMS = factory.createLocalMediaStream("ARDAMS");
-        if(pcParams.videoCallEnabled){
+        if (pcParams.videoCallEnabled) {
             MediaConstraints videoConstraints = new MediaConstraints();
             videoConstraints.mandatory.add(new MediaConstraints.KeyValuePair("maxHeight", Integer.toString(pcParams.videoHeight)));
             videoConstraints.mandatory.add(new MediaConstraints.KeyValuePair("maxWidth", Integer.toString(pcParams.videoWidth)));

@@ -99,7 +99,6 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
         } catch (WebSocketException e) {
             e.printStackTrace();
         }
-        //clientWebRtc = new ClientWebRtc(params, listener, VideoRendererGui.getEGLContext());
     }
 
     @Override
@@ -142,11 +141,7 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
     }
 
     public void answer(String callerId) throws JSONException {
-        /*JSONObject jsonObject= new JSONObject();
-        jsonObject.put("type","answer");
-
-        client.sendMessage(callerId, "init", jsonObject);*/
-        startCam();
+        client.setCamera();
     }
 
     public void call(String callId) {
@@ -160,13 +155,8 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d("CODECODE", String.valueOf(requestCode));
         if (requestCode == VIDEO_CALL_SENT) {
-            startCam();
+            client.setCamera();
         }
-    }
-
-    public void startCam() {
-        // Camera settings
-        client.start("Android");
     }
 
     @Override
