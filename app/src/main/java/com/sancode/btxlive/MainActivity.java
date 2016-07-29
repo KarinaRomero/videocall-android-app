@@ -6,8 +6,11 @@ import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,6 +50,10 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
     private String callerId;
     private String wsuri= "ws://192.168.1.75:8888";
     private String username;
+    private Button btnCall;
+    private Button btnHangUp;
+    private EditText edtNameCall;
+    private String callName;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -59,6 +66,34 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
                         | LayoutParams.FLAG_SHOW_WHEN_LOCKED
                         | LayoutParams.FLAG_TURN_SCREEN_ON);
         setContentView(R.layout.activity_main);
+
+        edtNameCall = (EditText) findViewById(R.id.edtNameCall);
+        btnCall = (Button) findViewById(R.id.btnCall);
+        btnHangUp = (Button) findViewById(R.id.btnHangUp);
+
+        callName=edtNameCall.getText().toString();
+
+        btnCall.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if(callName!=null){
+
+                }else{
+                    Toast.makeText(getApplicationContext(), "Debe llenar el campo", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        btnHangUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(callName!=null){
+
+                }else{
+                    Toast.makeText(getApplicationContext(), "Debe llenar el campo", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
 
         vsv = (GLSurfaceView) findViewById(R.id.glview_call);
