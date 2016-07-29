@@ -60,9 +60,11 @@ public class WebRtcClient {
     private class MessageHandler {
 
         private String wsuri;
+        private String userName;
 
-        private MessageHandler(String wsuri) {
+        private MessageHandler(String wsuri,String userName) {
             this.wsuri = wsuri;
+            this.userName=userName;
         }
 
         private void webConnection() throws WebSocketException {
@@ -76,11 +78,10 @@ public class WebRtcClient {
                 @Override
                 public void onOpen() {
                     Log.d(TAG, "Status: Connected to " + wsuri);
-                    Log.d("aqui", "onOpen");
                     JSONObject message = new JSONObject();
                     try {
                         message.put("type", "login");
-                        message.put("name", "Android");
+                        message.put("name", userName);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -301,13 +302,13 @@ public class WebRtcClient {
         endPoints[peer.endPoint] = false;
     }
 
-    public WebRtcClient(RtcListener listener, String wsuri, PeerConnectionParameters params, EGLContext mEGLcontext) throws WebSocketException {
+    public WebRtcClient(RtcListener listener, String wsuri, PeerConnectionParameters params, EGLContext mEGLcontext,String userName) throws WebSocketException {
         mListener = listener;
         pcParams = params;
         PeerConnectionFactory.initializeAndroidGlobals(listener, true, true,
                 params.videoCodecHwAcceleration, mEGLcontext);
         factory = new PeerConnectionFactory();
-        MessageHandler messageHandler = new MessageHandler(wsuri);
+        MessageHandler messageHandler = new MessageHandler(wsuri,userName);
 
         messageHandler.webConnection();
 
@@ -347,12 +348,7 @@ public class WebRtcClient {
     }
 
     /**
-     * Start the client.
-     * <p/>
-     * Set up the local stream and notify the signaling server.
-     * Call this method after onCallReady.
-     *
-     * @param name client name
+     * Start the camera.
      */
 
     public void setCamera() {
@@ -373,7 +369,9 @@ public class WebRtcClient {
 
         mListener.onLocalStream(localMS);
     }
-
+    /**
+     * Start the camera.
+     */
     private VideoCapturer getVideoCapturer() {
         String frontCameraDeviceName = VideoCapturerAndroid.getNameOfFrontFacingDevice();
         return VideoCapturerAndroid.create(frontCameraDeviceName);

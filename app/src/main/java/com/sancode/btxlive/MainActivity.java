@@ -46,6 +46,7 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
     private WebRtcClient client;
     private String callerId;
     private String wsuri= "ws://192.168.1.75:8888";
+    private String username;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,6 +59,7 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
                         | LayoutParams.FLAG_SHOW_WHEN_LOCKED
                         | LayoutParams.FLAG_TURN_SCREEN_ON);
         setContentView(R.layout.activity_main);
+
 
         vsv = (GLSurfaceView) findViewById(R.id.glview_call);
         vsv.setPreserveEGLContextOnPause(true);
@@ -79,6 +81,9 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
 
         final Intent intent = getIntent();
         final String action = intent.getAction();
+        //obtiene el nombre login
+        Bundle bundle= intent.getExtras();
+        username=(String)bundle.get("userName");
 
         if (Intent.ACTION_VIEW.equals(action)) {
             final List<String> segments = intent.getData().getPathSegments();
@@ -95,7 +100,7 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
 
         try {
             Log.d("init",params.toString());
-            client = new WebRtcClient(this, wsuri, params, VideoRendererGui.getEGLContext());
+            client = new WebRtcClient(this, wsuri, params, VideoRendererGui.getEGLContext(),username);
         } catch (WebSocketException e) {
             e.printStackTrace();
         }
