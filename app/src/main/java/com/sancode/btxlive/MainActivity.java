@@ -76,21 +76,21 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
         btnCall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 if(callName!=null){
-
+                    client.call(callName);
                 }else{
-                    Toast.makeText(getApplicationContext(), "Debe llenar el campo", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Debes llenar el campo", Toast.LENGTH_SHORT).show();
                 }
             }
         });
         btnHangUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d("name",username);
                 if(callName!=null){
-
+                    client.hangUp(username);
                 }else{
-                    Toast.makeText(getApplicationContext(), "Debe llenar el campo", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Debes llenar el campo", Toast.LENGTH_SHORT).show();
                 }
             }
         });

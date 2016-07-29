@@ -42,6 +42,12 @@ public class WebRtcClient {
     private RtcListener mListener;
     private final WebSocketConnection mConnection = new WebSocketConnection();
 
+    public Peer peerRemote;
+    public Peer peerLocal;
+    public SessionDescription sdp;
+    public IceCandidate candidate;
+    public String name;
+
     /**
      * Implement this interface to be notified of events.
      */
@@ -56,6 +62,32 @@ public class WebRtcClient {
 
         void onRemoveRemoteStream(int endPoint);
     }
+    public void call(String name){
+
+        Peer peerOffer= new Peer(name,0);
+        peerOffer.pc.createOffer(peerOffer, pcConstraints);
+
+        JSONObject sendOffer= new JSONObject();
+        try{
+            sendOffer.put("type", "offer");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
+    public void hangUp(String name){
+
+        JSONObject sendLive = new JSONObject();
+        try{
+            sendLive.put("type","leave");
+            sendLive.put("name",name);
+        } catch (JSONException e) {
+        e.printStackTrace();
+    }
+        mConnection.sendTextMessage(sendLive.toString());
+       // mConnection.disconnect();
+    }
+
 
     private class MessageHandler {
 
@@ -69,11 +101,7 @@ public class WebRtcClient {
 
         private void webConnection() throws WebSocketException {
             mConnection.connect(wsuri, new WebSocketHandler() {
-                Peer peerRemote;
-                Peer peerLocal;
-                SessionDescription sdp;
-                IceCandidate candidate;
-                String name;
+
 
                 @Override
                 public void onOpen() {
@@ -170,7 +198,12 @@ public class WebRtcClient {
                                 }
                                 break;
                             case "leave":
-                                removePeer(message.getString("name"));
+                                mListener.onRemoveRemoteStream(peerRemote.endPoint);
+                                peerRemote.pc.close();
+                                /*videoSource.stop();
+                                peerRemote.pc.dispose();
+                                videoSource.dispose();
+                                mListener.onStatusChanged("DISCONNECTED");*/
                                 break;
                             default:
                                 break;
