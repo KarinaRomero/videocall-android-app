@@ -371,12 +371,17 @@ public class WebRtcClient {
      * Call this method in Activity.onDestroy()
      */
     public void onDestroy() {
-        for (Peer peer : peers.values()) {
-            peer.pc.dispose();
+        try{
+            for (Peer peer : peers.values()) {
+                peer.pc.dispose();
+            }
+            videoSource.dispose();
+            factory.dispose();
+            mConnection.disconnect();
+        }catch (Exception e){
+
         }
-        videoSource.dispose();
-        factory.dispose();
-        mConnection.disconnect();
+
     }
 
     /**

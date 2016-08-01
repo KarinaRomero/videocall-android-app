@@ -12,7 +12,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Loging as"
+        android:text="Login as"
         android:id="@+id/txtLogin"
         android:fontFamily="sans-serif"
         android:textSize="90px"
