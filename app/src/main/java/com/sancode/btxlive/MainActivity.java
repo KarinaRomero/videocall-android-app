@@ -71,14 +71,14 @@ public class MainActivity extends Activity implements WebRtcClient.RtcListener{
         btnCall = (Button) findViewById(R.id.btnCall);
         btnHangUp = (Button) findViewById(R.id.btnHangUp);
 
-        callName=edtNameCall.getText().toString();
-        Log.d("nameCall",edtNameCall.getText().toString());
 
         btnCall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                callName=edtNameCall.getText().toString();
+
                 if(callName!=null){
-                    client.call("kari");
+                    client.call(callName);
                 }else{
                     Toast.makeText(getApplicationContext(), "Debes llenar el campo", Toast.LENGTH_SHORT).show();
                 }
