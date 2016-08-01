@@ -64,16 +64,13 @@ public class WebRtcClient {
     }
     public void call(String name){
 
-        Peer peerOffer= new Peer(name,0);
-        peerOffer.pc.createOffer(peerOffer, pcConstraints);
-
-        JSONObject sendOffer= new JSONObject();
-        try{
-            sendOffer.put("type", "offer");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
+        setCamera();
+        //this.name=name;
+        peerRemote= new Peer(name,0);
+        //Log.d("jiji:", peerRemote.pc.getLocalDescription().description);
+        this.name=name;
+        peers.put(name, peerRemote);
+        peerRemote.pc.createOffer(peerRemote, pcConstraints);
     }
     public void hangUp(String name){
 
@@ -85,7 +82,6 @@ public class WebRtcClient {
         e.printStackTrace();
     }
         mConnection.sendTextMessage(sendLive.toString());
-       // mConnection.disconnect();
     }
 
 
@@ -164,22 +160,13 @@ public class WebRtcClient {
                                 mConnection.sendTextMessage(jsonObject.toString());
                                 break;
                             case "answer":
-                                peerRemote = peers.get(message.getString("name"));
+                                peerRemote = peers.get(name);
                                 sdp = new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm("ANSWER"),
                                         message.getJSONObject("answer").getString("sdp")
                                 );
-
-                                peerRemote.pc.setLocalDescription(peerRemote, sdp);
-                                peerRemote.pc.createOffer(peerRemote, pcConstraints);
-
-                                /*JSONObject jsonObject1= new JSONObject();
-                                jsonObject1.put("type","offer");
-                                jsonObject1.put("offer",sdp);
-                                mConnection.sendTextMessage(jsonObject1.toString());*/
-                                //mListener.onCallReady(name);
-
-                                //start("Android");
+                                peerRemote.pc.setRemoteDescription(peerRemote, sdp);
+                                mListener.onCallReady("call1");
                                 break;
                             case "candidate":
                                 PeerConnection pc = peers.get(name).pc;
@@ -200,10 +187,6 @@ public class WebRtcClient {
                             case "leave":
                                 mListener.onRemoveRemoteStream(peerRemote.endPoint);
                                 peerRemote.pc.close();
-                                /*videoSource.stop();
-                                peerRemote.pc.dispose();
-                                videoSource.dispose();
-                                mListener.onStatusChanged("DISCONNECTED");*/
                                 break;
                             default:
                                 break;
@@ -251,6 +234,22 @@ public class WebRtcClient {
 
         @Override
         public void onSignalingChange(PeerConnection.SignalingState signalingState) {
+            Log.d("SIGNSTATE", signalingState.toString());
+            if(signalingState.equals(PeerConnection.SignalingState.HAVE_LOCAL_OFFER)){
+                JSONObject sigOffer= new JSONObject();
+                JSONObject sendOffer= new JSONObject();
+                try{
+                    sigOffer.put("type","offer");
+                    sigOffer.put("sdp", this.pc.getLocalDescription().description);
+
+                    sendOffer.put("type", "offer");
+                    sendOffer.put("offer",sigOffer);
+                    sendOffer.put("name",id);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                mConnection.sendTextMessage(sendOffer.toString());
+            }
         }
 
         @Override
