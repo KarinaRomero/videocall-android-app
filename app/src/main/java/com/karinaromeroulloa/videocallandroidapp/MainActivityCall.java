@@ -1,4 +1,4 @@
-package com.sancode.btxlive;
+package com.karinaromeroulloa.videocallandroidapp;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
@@ -9,8 +9,8 @@ import android.widget.TextView;
 
 public class MainActivityCall extends AppCompatActivity {
 
-    TextView edtName;
-    Button btnLogin;
+    private TextView edtName;
+    private Button btnLogin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

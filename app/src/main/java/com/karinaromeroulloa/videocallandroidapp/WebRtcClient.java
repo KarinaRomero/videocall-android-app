@@ -1,9 +1,10 @@
-package com.sancode.btxlive;
+/**
+ * Created by Karina Romero on 18/07/2016.
+ */
+package com.karinaromeroulloa.videocallandroidapp;
 
 import android.opengl.EGLContext;
 import android.util.Log;
-
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.AudioSource;
@@ -18,19 +19,22 @@ import org.webrtc.SessionDescription;
 import org.webrtc.VideoCapturer;
 import org.webrtc.VideoCapturerAndroid;
 import org.webrtc.VideoSource;
-
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.LinkedList;
-
 import de.tavendo.autobahn.WebSocketConnection;
 import de.tavendo.autobahn.WebSocketException;
 import de.tavendo.autobahn.WebSocketHandler;
 
+/**
+ * This class contains the code to create a client WebRTC.
+ *
+ * @author Karina Romero
+ */
 
-public class WebRtcClient {
+public class WebRtcClient{
+
     private final static String TAG = WebRtcClient.class.getCanonicalName();
-    private final static int MAX_PEER = 2;
+    private final static int MAX_PEER = 2;//class Peer
     private boolean[] endPoints = new boolean[MAX_PEER];
     private PeerConnectionFactory factory;
     private HashMap<String, Peer> peers = new HashMap<>();
@@ -40,13 +44,11 @@ public class WebRtcClient {
     private MediaStream localMS;
     private VideoSource videoSource;
     private RtcListener mListener;
-    private final WebSocketConnection mConnection = new WebSocketConnection();
-
-    public Peer peerRemote;
-    public Peer peerLocal;
-    public SessionDescription sdp;
-    public IceCandidate candidate;
-    public String name;
+    private final WebSocketConnection mConnection = new WebSocketConnection();//class MenssageHandler
+    public Peer peerRemote;// class MessageHandler-webRtcClient
+    public SessionDescription sdp;// class MessageHandler-Peer
+    public IceCandidate candidate;// class MessageHandler-Peer
+    public String name;//class MessageHandler-Peer
 
     /**
      * Implement this interface to be notified of events.
@@ -62,43 +64,42 @@ public class WebRtcClient {
 
         void onRemoveRemoteStream(int endPoint);
     }
-    public void call(String name){
-
-        setCamera();
-        //this.name=name;
-        peerRemote= new Peer(name,0);
-        //Log.d("jiji:", peerRemote.pc.getLocalDescription().description);
-        this.name=name;
-        peers.put(name, peerRemote);
-        peerRemote.pc.createOffer(peerRemote, pcConstraints);
-    }
-    public void hangUp(String name){
-
-        JSONObject sendLive = new JSONObject();
-        try{
-            sendLive.put("type","leave");
-            sendLive.put("name",name);
-        } catch (JSONException e) {
-        e.printStackTrace();
-    }
-        mConnection.sendTextMessage(sendLive.toString());
-    }
 
 
+    /**
+     * This class contains all the code that creates the WebSocket connection handles messages sent and received by signaling.
+     *
+     * @author Karina Romero
+     */
     private class MessageHandler {
 
         private String wsuri;
         private String userName;
 
-        private MessageHandler(String wsuri,String userName) {
+        /***
+         * Class constructor initializes the parameters; IP address and user name
+         *
+         * @param wsuri    IP adress
+         * @param userName user name
+         */
+
+        private MessageHandler(String wsuri, String userName) {
             this.wsuri = wsuri;
-            this.userName=userName;
+            this.userName = userName;
         }
+
+        /***
+         * WebSocket connection method
+         *
+         * @throws Exception
+         */
 
         private void webConnection() throws WebSocketException {
             mConnection.connect(wsuri, new WebSocketHandler() {
 
-
+                /**
+                 * WebSocketHandler class method that initializes the connection, sends a message to the signaling login.
+                 */
                 @Override
                 public void onOpen() {
                     Log.d(TAG, "Status: Connected to " + wsuri);
@@ -112,6 +113,11 @@ public class WebRtcClient {
                     mConnection.sendTextMessage(message.toString());
                 }
 
+                /**
+                 * WebSocketHandler method of the class was listening to receive messages sent by the signaling.
+                 *
+                 * @param payload Message received by the signaling.
+                 */
                 @Override
                 public void onTextMessage(String payload) {
                     Log.d(TAG, "Got echo: " + payload);
@@ -191,12 +197,18 @@ public class WebRtcClient {
                             default:
                                 break;
                         }
-                        ;
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
 
+                /**
+                 * This method closes the connection WebSocket.
+                 *
+                 * @param code identifier code.
+                 * @param reason String to the cause.
+                 */
                 @Override
                 public void onClose(int code, String reason) {
                     Log.d(TAG, "Connection lost.");
@@ -205,11 +217,22 @@ public class WebRtcClient {
         }
     }
 
+    /**
+     * This class is the class observer status changes in the description of the secion and PeerConnection
+     * implements SdpObserver y PeerConnection.Observer classes.
+     *
+     * @author Karina Romero
+     */
     private class Peer implements SdpObserver, PeerConnection.Observer {
         private PeerConnection pc;
         private String id;
         private int endPoint;
 
+        /**
+         * This method creates a description of the session.
+         *
+         * @param sdp description of the session.
+         */
 
         @Override
         public void onCreateSuccess(final SessionDescription sdp) {
@@ -218,6 +241,9 @@ public class WebRtcClient {
             pc.setLocalDescription(Peer.this, sdp);
         }
 
+        /**
+         * creates an answer
+         */
         @Override
         public void onSetSuccess() {
             pc.createAnswer(Peer.this, pcConstraints);
@@ -232,19 +258,24 @@ public class WebRtcClient {
         public void onSetFailure(String s) {
         }
 
+        /**
+         * In this method if the state is HAVE_LOCAL_OFFER an offer is sent
+         *
+         * @param signalingState It contains the status value
+         */
         @Override
         public void onSignalingChange(PeerConnection.SignalingState signalingState) {
             Log.d("SIGNSTATE", signalingState.toString());
-            if(signalingState.equals(PeerConnection.SignalingState.HAVE_LOCAL_OFFER)){
-                JSONObject sigOffer= new JSONObject();
-                JSONObject sendOffer= new JSONObject();
-                try{
-                    sigOffer.put("type","offer");
+            if (signalingState.equals(PeerConnection.SignalingState.HAVE_LOCAL_OFFER)) {
+                JSONObject sigOffer = new JSONObject();
+                JSONObject sendOffer = new JSONObject();
+                try {
+                    sigOffer.put("type", "offer");
                     sigOffer.put("sdp", this.pc.getLocalDescription().description);
 
                     sendOffer.put("type", "offer");
-                    sendOffer.put("offer",sigOffer);
-                    sendOffer.put("name",id);
+                    sendOffer.put("offer", sigOffer);
+                    sendOffer.put("name", id);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -252,6 +283,11 @@ public class WebRtcClient {
             }
         }
 
+        /**
+         * This method reports the status of the ICE connection, should be DISCONNECTED removes the connection.
+         *
+         * @param iceConnectionState It contains the status value
+         */
         @Override
         public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
             if (iceConnectionState == PeerConnection.IceConnectionState.DISCONNECTED) {
@@ -269,6 +305,11 @@ public class WebRtcClient {
         public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
         }
 
+        /**
+         * This receives a candidate this is sent to the signaling.
+         *
+         * @param candidate candidate to send
+         */
         @Override
         public void onIceCandidate(final IceCandidate candidate) {
 
@@ -286,6 +327,11 @@ public class WebRtcClient {
             }
         }
 
+        /**
+         * This method adds a stream
+         *
+         * @param mediaStream Stream de audio and video
+         */
         @Override
         public void onAddStream(MediaStream mediaStream) {
             Log.d(TAG, "onAddStream " + mediaStream.label());
@@ -293,6 +339,11 @@ public class WebRtcClient {
             mListener.onAddRemoteStream(mediaStream, endPoint + 1);
         }
 
+        /**
+         * This method remove a stream
+         *
+         * @param mediaStream Stream de audio and video
+         */
         @Override
         public void onRemoveStream(MediaStream mediaStream) {
             Log.d(TAG, "onRemoveStream " + mediaStream.label());
@@ -301,14 +352,18 @@ public class WebRtcClient {
 
         @Override
         public void onDataChannel(DataChannel dataChannel) {
-            Log.d("pruebita", "mPeerConnection onDataChannel " + dataChannel);
         }
 
         @Override
         public void onRenegotiationNeeded() {
-            Log.d("pruebita", "onRenegotiationNeeded");
         }
 
+        /**
+         * Class constructor, which creates the connection factory, add the local stream and sends the connection status.
+         *
+         * @param id       it contains the identifier of the call
+         * @param endPoint value peer connection arrangement
+         */
         public Peer(String id, int endPoint) {
             Log.d(TAG, "new Peer: " + id + " " + endPoint);
 
@@ -326,6 +381,11 @@ public class WebRtcClient {
 
     }
 
+    /**
+     * Remove the peer connection.
+     *
+     * @param id peer identifier to remove
+     */
     private void removePeer(String id) {
         Peer peer = peers.get(id);
         mListener.onRemoveRemoteStream(peer.endPoint);
@@ -334,13 +394,22 @@ public class WebRtcClient {
         endPoints[peer.endPoint] = false;
     }
 
-    public WebRtcClient(RtcListener listener, String wsuri, PeerConnectionParameters params, EGLContext mEGLcontext,String userName) throws WebSocketException {
+    /**
+     * Class constructor that initializes the parameters of a client.
+     *
+     * @param listener    listening states Peer connection
+     * @param wsuri       ip adress
+     * @param params      parameters of the view where the local video will be shown and remote
+     * @param mEGLcontext GLview context, where view video call show
+     * @param userName    user name
+     */
+    public WebRtcClient(RtcListener listener, String wsuri, PeerConnectionParameters params, EGLContext mEGLcontext, String userName) throws WebSocketException {
         mListener = listener;
         pcParams = params;
         PeerConnectionFactory.initializeAndroidGlobals(listener, true, true,
                 params.videoCodecHwAcceleration, mEGLcontext);
         factory = new PeerConnectionFactory();
-        MessageHandler messageHandler = new MessageHandler(wsuri,userName);
+        MessageHandler messageHandler = new MessageHandler(wsuri, userName);
 
         messageHandler.webConnection();
 
@@ -371,14 +440,14 @@ public class WebRtcClient {
      * Call this method in Activity.onDestroy()
      */
     public void onDestroy() {
-        try{
+        try {
             for (Peer peer : peers.values()) {
                 peer.pc.dispose();
             }
             videoSource.dispose();
             factory.dispose();
             mConnection.disconnect();
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
 
@@ -406,6 +475,7 @@ public class WebRtcClient {
 
         mListener.onLocalStream(localMS);
     }
+
     /**
      * Start the camera.
      */
@@ -413,4 +483,37 @@ public class WebRtcClient {
         String frontCameraDeviceName = VideoCapturerAndroid.getNameOfFrontFacingDevice();
         return VideoCapturerAndroid.create(frontCameraDeviceName);
     }
+    /**
+     * This method sends an offer with the user name you want to call it is called in the call button on the main activity.
+     *
+     * @param name It contains the name of the recipient
+     */
+    public void call(String name) {
+
+        setCamera();
+        //this.name=name;
+        peerRemote = new Peer(name, 0);
+        //Log.d("jiji:", peerRemote.pc.getLocalDescription().description);
+        this.name = name;
+        peers.put(name, peerRemote);
+        peerRemote.pc.createOffer(peerRemote, pcConstraints);
+    }
+
+    /**
+     * Notifies signaling that the call is over, this method is called on the main activity, in the HangUp button.
+     *
+     * @param name It contains the name of the recipient.
+     */
+    public void hangUp(String name) {
+
+        JSONObject sendLive = new JSONObject();
+        try {
+            sendLive.put("type", "leave");
+            sendLive.put("name", name);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        mConnection.sendTextMessage(sendLive.toString());
+    }
+
 }

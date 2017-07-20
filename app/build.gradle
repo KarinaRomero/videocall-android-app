@@ -5,7 +5,7 @@ android {
     buildToolsVersion "24.0.0"
 
     defaultConfig {
-        applicationId "com.sancode.btxlive"
+        applicationId "com.karinaromeroulloa.videocallandroidapp"
         minSdkVersion 19
         targetSdkVersion 24
         versionCode 1

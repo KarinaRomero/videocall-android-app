@@ -1,4 +1,4 @@
-package com.sancode.btxlive;
+package com.karinaromeroulloa.videocallandroidapp;
 
 /**
  * Created by betzy on 24/07/2016.

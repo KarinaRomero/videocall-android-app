@@ -1,4 +1,4 @@
-package com.sancode.btxlive;
+package com.karinaromeroulloa.videocallandroidapp;
 
 import org.junit.Test;
 

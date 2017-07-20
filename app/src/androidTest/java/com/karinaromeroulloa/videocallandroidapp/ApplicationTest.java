@@ -1,4 +1,4 @@
-package com.sancode.btxlive;
+package com.karinaromeroulloa.videocallandroidapp;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
